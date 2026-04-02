@@ -29,7 +29,7 @@ python src/train_qlora_v2.py \
     --lora_rank 16 \
     --lora_alpha 32 \
     --max_steps 600 \
-    --eval_steps 60 \
+    --eval_steps 100 \
     --batch_size 2 \
     --gradient_accumulation_steps 8 \
     --learning_rate 1e-4 \

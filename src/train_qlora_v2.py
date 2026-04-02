@@ -259,7 +259,7 @@ def main():
         learning_rate=args.learning_rate,
         lr_scheduler_type="cosine",
         logging_steps=10,
-        eval_strategy="steps",   
+        eval_strategy="no",   
         eval_steps=args.eval_steps,    
         eval_accumulation_steps=1, 
         per_device_eval_batch_size=1,
