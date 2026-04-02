@@ -259,14 +259,6 @@ def main():
         learning_rate=args.learning_rate,
         lr_scheduler_type="cosine",
         logging_steps=10,
-        eval_strategy="no",   
-        eval_steps=args.eval_steps,    
-        eval_accumulation_steps=1, 
-        per_device_eval_batch_size=1,
-        save_strategy="steps",
-        save_steps=args.eval_steps,
-        load_best_model_at_end=True,
-        metric_for_best_model="eval_loss",
         bf16=True,
         tf32=True,
         max_grad_norm=0.3,
@@ -282,19 +274,6 @@ def main():
         seed=args.seed,
     )
 
-    def compute_metrics(eval_preds):
-        logits, labels = eval_preds
-        if isinstance(logits, tuple):
-            logits = logits[0]
-        predictions = np.argmax(logits, axis=-1)
-        
-        mask = labels != -100
-        labels = labels[mask]
-        predictions = predictions[mask]
-        
-        acc = (predictions == labels).mean() if len(labels) > 0 else 0
-        return {"accuracy": acc}
-
     # Train
     print("\nStarting training...")
 
@@ -302,9 +281,7 @@ def main():
         model=model,
         args=training_args,
         train_dataset=train_dataset,
-        eval_dataset=eval_dataset,
         data_collator=collator,
-        compute_metrics=compute_metrics,
     )
 
     trainer.train(resume_from_checkpoint=args.resume_from_checkpoint)
