@@ -50,7 +50,7 @@ def main():
 
     # --- 3. SETUP DATASET & PROCESSOR ---
     os.environ['HF_DATASETS_CACHE'] = "/scratch-shared/scur2635/comicspap/hf_cache"
-    ds_test = load_dataset("VLR-CVC/ComicsPAP", "sequence_filling", split="test")
+    ds_test = load_dataset("VLR-CVC/ComicsPAP", "sequence_filling", split=args.split)
     
     font_path = "/home/scur2635/comicspap-project/assets/DejaVuSans.ttf"
     panel_processor = SingleImagePickAPanel(font_path=font_path)

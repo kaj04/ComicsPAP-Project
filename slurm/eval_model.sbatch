@@ -15,17 +15,17 @@ source venv/bin/activate
 
 # CONFIGURATION: Change this path to evaluate different LoRA weights
 ADAPTER_PATH="/scratch-shared/scur2635/comicspap/checkpoints/qlora_v2_r16_sequence_filling_20260402_230902/checkpoint-600"
-OUTPUT_DIR="results/evaluations"
+OUTPUT_DIR="results/validation_best_model"
 
 echo "Starting evaluation for: $ADAPTER_PATH"
 
 export HF_HOME="/scratch-shared/scur2635/comicspap/hf_cache"
-export HF_DATASETS_OFFLINE=1
+# export HF_DATASETS_OFFLINE=0
 export TRANSFORMERS_OFFLINE=1
 
 python src/evaluate.py \
     --adapter_path "$ADAPTER_PATH" \
     --output_dir "$OUTPUT_DIR" \
-    --split "test"
+    --split "val"
 
 echo "Evaluation finished."
