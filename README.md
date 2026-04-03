@@ -17,7 +17,7 @@ Achieved **66.41% Validation Accuracy**, significantly outperforming zero-shot b
 ## Project Highlights
 - **Model:** Qwen2.5-VL-7B-Instruct (Vision-Language).
 - **Technique:** QLoRA (Rank 16, Alpha 32) for parameter-efficient fine-tuning.
-- **Compute:** Trained on 1x NVIDIA A100 (80GB) on the **Snellius Supercomputer** (SURF/TU/e).
+- **Compute:** Trained on 1x NVIDIA A100 (80GB) on the **Snellius Supercomputer** (SURFcua - TU/e).
 - **Performance:**
   - **Ours (7B Fine-tuned): 66.41%**
   - Base 72B Zero-shot: 46.88% (from paper)
@@ -26,7 +26,7 @@ Achieved **66.41% Validation Accuracy**, significantly outperforming zero-shot b
 ## Getting Started
 ### 1. Installation
 ```bash
-git clone [https://github.com/TUO_USERNAME/NOME_REPO.git](https://github.com/TUO_USERNAME/NOME_REPO.git)
+git clone [https://github.com/kaj04/ComicsPAP-Project.git](https://github.com/kaj04/ComicsPAP-Project.git)
 cd NOME_REPO
 pip install -r requirements.txt
 ```
@@ -42,7 +42,7 @@ python src/evaluate.py --adapter_path kaj04/Qwen2.5-VL-7B-ComicsPAP-QLoRA --spli
 This project is based on the **ComicsPAP** dataset and benchmark. Special thanks to the authors for their work in visual narrative understanding. 
 
 - **Official Dataset:** [VLR-CVC/ComicsPAP](https://huggingface.co/datasets/VLR-CVC/ComicsPAP)
-- **Official Paper:** [ComicsPAP: Understanding Comic Strips by Picking the Correct Panel](https://arxiv.org/abs/...)
+- **Official Paper:** [ComicsPAP: Understanding Comic Strips by Picking the Correct Panel](https://arxiv.org/abs/2503.08561)
 
 ### Citation
 ```bibtex
