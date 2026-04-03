@@ -29,11 +29,13 @@ Achieved **66.41% Validation Accuracy**, significantly outperforming zero-shot b
 git clone [https://github.com/TUO_USERNAME/NOME_REPO.git](https://github.com/TUO_USERNAME/NOME_REPO.git)
 cd NOME_REPO
 pip install -r requirements.txt
+```
 
 ### 2. Run Evaluation
 You can run the evaluation using my pre-trained adapters from Hugging Face:
+```bash
 python src/evaluate.py --adapter_path kaj04/Qwen2.5-VL-7B-ComicsPAP-QLoRA --split val
-
+```
 
 ```markdown
 ## Acknowledgments
@@ -55,5 +57,4 @@ This project is based on the **ComicsPAP** dataset and benchmark. Special thanks
   pages="337--350",
   isbn="978-3-032-04614-7"
 }
-
 ```
