@@ -265,6 +265,8 @@ def main():
         warmup_ratio=0.10,
         push_to_hub=False,
         report_to="wandb",
+        save_steps=100,
+        save_strategy="steps",
         run_name=experiment_name,
         gradient_checkpointing_kwargs={"use_reentrant": False},
         dataset_kwargs={"skip_prepare_dataset": True},
