@@ -2,6 +2,7 @@ import os
 import sys
 import torch
 import json
+import argparse
 import collections
 import numpy as np
 import pandas as pd
@@ -11,46 +12,55 @@ from peft import PeftModel
 from qwen_vl_utils import process_vision_info
 from datasets import load_dataset
 
-# 1. Path Setup (replicando la logica del notebook)
+# Setup dei path per Snellius
 venv_path = "/gpfs/home3/scur2635/comicspap-project/venv/lib/python3.12/site-packages"
 project_root = "/gpfs/home3/scur2635/comicspap-project/official_repo"
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-# Importiamo il tuo processore personalizzato dal tuo progetto
 from data_utils import SingleImagePickAPanel
 
-def main():
-    # --- CONFIGURAZIONE PATH (Da cambiare via SLURM se vuoi) ---
-    adapter_path = os.getenv("ADAPTER_PATH", "/scratch-shared/scur2635/comicspap/checkpoints/qlora_v2_r16_sequence_filling_20260402_230902/checkpoint-600")
-    base_model_id = "Qwen/Qwen2.5-VL-7B-Instruct"
-    output_dir = "results/evaluations"
-    os.makedirs(output_dir, exist_ok=True)
-    exp_name = os.path.basename(os.path.normpath(adapter_path))
+def parse_args():
+    parser = argparse.ArgumentParser(description="Evaluate Qwen2.5-VL LoRA on ComicsPAP")
+    parser.add_argument("--adapter_path", type=str, required=True, help="Path to LoRA checkpoint")
+    parser.add_argument("--output_dir", type=str, default="results/evaluations", help="Directory to save results")
+    parser.add_argument("--split", type=str, default="val", help="Dataset split to evaluate (val or test)")
+    return parser.parse_args()
 
-    # --- 2. CARICAMENTO MODELLO (Logica Notebook) ---
+def main():
+    # 1. Inizializza gli argomenti (Risolve il NameError)
+    args = parse_args()
+    
+    # 2. Configurazione Directory e Nomi
+    os.makedirs(args.output_dir, exist_ok=True)
+    # Estraiamo il nome del checkpoint per differenziare i file di output
+    exp_name = os.path.basename(os.path.normpath(args.adapter_path))
+    base_model_id = "Qwen/Qwen2.5-VL-7B-Instruct"
+
+    # --- CARICAMENTO MODELLO ---
     print(f"Loading base model: {base_model_id}")
     model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
         base_model_id,
         torch_dtype=torch.bfloat16,
         device_map={"": 0},
-        ignore_mismatched_sizes=True # RISOLVE IL RUNTIME ERROR
+        ignore_mismatched_sizes=True 
     )
 
-    print(f"Injecting LoRA weights from: {adapter_path}")
+    print(f"Injecting LoRA weights from: {args.adapter_path}")
     model = PeftModel.from_pretrained(
         model, 
-        adapter_path,
+        args.adapter_path,
         device_map={"": 0}
     )
     model.eval()
     
-    # Il processor va caricato dall'adapter se hai salvato config specifiche, o dalla base
     processor = AutoProcessor.from_pretrained(base_model_id)
 
-    # --- 3. SETUP DATASET & PROCESSOR ---
+    # --- SETUP DATASET & PROCESSOR ---
     os.environ['HF_DATASETS_CACHE'] = "/scratch-shared/scur2635/comicspap/hf_cache"
-    ds_test = load_dataset("VLR-CVC/ComicsPAP", "sequence_filling", split=args.split)
+    
+    print(f"Loading dataset split: {args.split}")
+    ds_to_eval = load_dataset("VLR-CVC/ComicsPAP", "sequence_filling", split=args.split)
     
     font_path = "/home/scur2635/comicspap-project/assets/DejaVuSans.ttf"
     panel_processor = SingleImagePickAPanel(font_path=font_path)
@@ -63,16 +73,16 @@ def main():
         "Respond with only the option number."
     )
 
-    # --- 4. INFERENZA ---
+    # --- INFERENZA ---
     results = []
     predictions = []
     ground_truths = []
 
-    print(f"Starting evaluation on {len(ds_test)} samples...")
-    for i in tqdm(range(len(ds_test))):
-        sample = ds_test[i]
+    print(f"Starting evaluation on {len(ds_to_eval)} samples...")
+    for i in tqdm(range(len(ds_to_eval))):
+        sample = ds_to_eval[i]
         
-        # Composizione immagine (Tua logica PanelProcessor)
+        # Pre-processing Immagine
         batch_examples = {k: [v] for k, v in sample.items()}
         processed_batch = panel_processor.map_to_single_image(batch_examples)
         img = processed_batch['single_image'][0]
@@ -87,7 +97,7 @@ def main():
             ],
         }]
 
-        # Pre-processing
+        # Pre-processing Testo/Vision
         text_inp = processor.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
         image_inp, video_inp = process_vision_info(messages)
         inputs = processor(
@@ -98,7 +108,6 @@ def main():
             return_tensors="pt"
         ).to(model.device)
 
-        # Generazione
         with torch.no_grad():
             generated_ids = model.generate(**inputs, max_new_tokens=10, do_sample=False)
         
@@ -109,7 +118,6 @@ def main():
         gt = str(sample['solution_index'])
         is_correct = (pred == gt)
 
-        # Salvataggio dati
         predictions.append(pred)
         ground_truths.append(gt)
         results.append({
@@ -120,27 +128,31 @@ def main():
             "caption": caption
         })
 
-    # --- 5. REPORTING ---
+    # --- REPORTING ---
     accuracy = sum(1 for p, g in zip(predictions, ground_truths) if p == g) / len(predictions)
     dist = dict(collections.Counter(predictions))
     
-    # Save CSV
+    # Salvataggio CSV (Dettagliato)
     df = pd.DataFrame(results)
-    df.to_csv(os.path.join(output_dir, f"{exp_name}_results.csv"), index=False)
+    csv_filename = f"{exp_name}_{args.split}_results.csv"
+    df.to_csv(os.path.join(args.output_dir, csv_filename), index=False)
 
-    # Save JSON Summary
+    # Salvataggio JSON (Riassunto per Web App)
     summary = {
+        "experiment": exp_name,
+        "split": args.split,
         "accuracy": accuracy,
         "distribution": dist,
-        "total": len(ds_test),
-        "results": results
+        "total_samples": len(ds_to_eval),
+        "timestamp": pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S")
     }
-    with open(os.path.join(output_dir, f"{exp_name}_summary.json"), "w") as f:
+    json_filename = f"{exp_name}_{args.split}_summary.json"
+    with open(os.path.join(args.output_dir, json_filename), "w") as f:
         json.dump(summary, f, indent=4)
 
     print(f"\n✅ Evaluation Finished!")
     print(f"Accuracy: {accuracy:.2%}")
-    print(f"Results saved in {output_dir}")
+    print(f"Results saved in {args.output_dir}")
 
 if __name__ == "__main__":
     main()

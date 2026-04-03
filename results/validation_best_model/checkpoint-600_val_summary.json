@@ -1,0 +1,14 @@
+{
+    "experiment": "checkpoint-600",
+    "split": "val",
+    "accuracy": 0.6641221374045801,
+    "distribution": {
+        "2": 44,
+        "0": 64,
+        "1": 60,
+        "4": 51,
+        "3": 43
+    },
+    "total_samples": 262,
+    "timestamp": "2026-04-03 22:35:38"
+}
