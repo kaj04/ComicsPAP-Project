@@ -43,6 +43,7 @@ This project is based on the **ComicsPAP** dataset and benchmark. Special thanks
 
 - **Official Dataset:** [VLR-CVC/ComicsPAP](https://huggingface.co/datasets/VLR-CVC/ComicsPAP)
 - **Official Paper:** [ComicsPAP: Understanding Comic Strips by Picking the Correct Panel](https://arxiv.org/abs/2503.08561)
+```
 
 ### Citation
 ```bibtex
